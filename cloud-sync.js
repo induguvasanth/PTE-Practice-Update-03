@@ -19,7 +19,7 @@ const key=(sid,t,q)=>[sid,t,q].join('|');
 const validScore=s=>s!==null&&s!==undefined&&s!==''&&Number.isFinite(Number(s));
 const date=s=>{const n=Date.parse(s||'');return Number.isFinite(n)?n:0};
 const status=r=>r.finished||r.status==='finished'?'finished':'attempted';
-const show=(message,problem=false)=>{window.PTECloudStatus={message,problem};window.dispatchEvent(new CustomEvent('pte:sync-status',{detail:window.PTECloudStatus}));};
+const show=(message,problem=false)=>{window.PTECloudStatus={message,problem};window.dispatchEvent(new CustomEvent('pte:sync-status',{detail:window.PTECloudStatus}));const el=document.getElementById('pteSheetSyncStatus');if(el){el.textContent=message;el.style.color=problem?'#b42318':'#526077';}};
 function fromRemote(r,sid,old){
  const sw=new Set('personalIntroduction readAloud repeatSentence describeImage retellLecture answerShortQuestion summarizeGroupDiscussion respondSituation summarizeWrittenText essay'.split(' '));
  const rd=new Set('readingRWBlanks readingMCQMultiple reorderParagraph readingBlanks readingMCQSingle'.split(' '));
@@ -37,7 +37,7 @@ const remote=new Map((response.records||[]).map(r=>[key(sid,String(r.task),Strin
 const local=new Map(before.filter(r=>String(r.studentId)===sid).map(r=>[key(sid,task(r),qid(r)),r]));
 const merged=new Map();const toUpload=[];
 for(const [k,r] of remote){const old=local.get(k)||resolveRemote(r,sid,before);const cloud=fromRemote(r,sid,old);let result=cloud;
-if(old){const newer=date(old.updatedAt)>date(r.updatedAt);if(newer){result={...old,finished:!!old.finished||cloud.finished,score:validScore(old.score)?old.score:cloud.score,completedAt:old.completedAt||cloud.completedAt};if(result.finished!==cloud.finished||String(result.score??'')!==String(cloud.score??''))toUpload.push(result)}else if(cloud.finished&& !validScore(cloud.score)&&validScore(old.score)){result={...cloud,score:old.score};toUpload.push(result)}}
+if(old){const newer=date(old.updatedAt)>date(r.updatedAt) || (!!old.finished && !cloud.finished);if(newer){result={...old,finished:!!old.finished||cloud.finished,score:validScore(old.score)?old.score:cloud.score,completedAt:old.completedAt||cloud.completedAt};if(result.finished!==cloud.finished||String(result.score??'')!==String(cloud.score??''))toUpload.push(result)}else if(cloud.finished&& !validScore(cloud.score)&&validScore(old.score)){result={...cloud,score:old.score};toUpload.push(result)}}
 merged.set(k,result)}
 for(const [k,r] of local)if(!merged.has(k)&&![...merged.values()].some(x=>x.module===r.module&&x.item===r.item)){merged.set(k,r);toUpload.push(r)}
 const other=before.filter(r=>String(r.studentId)!==sid);
