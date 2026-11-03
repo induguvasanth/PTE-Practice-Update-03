@@ -79,12 +79,13 @@ function summary(){
 }
 function refresh(){
  summary();
- const s=active(),c=currentItem(),r=recordFor(s,c.module,c.item);
- const headerStatus=document.querySelector('.exam-head .status');
+ const s=window.PTEAuth?.session()?.studentId||active(),c=currentItem(),r=recordFor(s,c.module,c.item,c.questionId);
+ const headerStatus=document.querySelector('.exam-head .status, .title-row .status');
  if(headerStatus){let badge=document.getElementById('pteCompletionStamp');if(!badge){badge=document.createElement('div');badge.id='pteCompletionStamp';badge.className='pteCompletionStamp';headerStatus.insertAdjacentElement('afterend',badge)}badge.textContent=r?.finished?'✓ Finished · '+dateTime(r.completedAt||r.updatedAt):'';badge.hidden=!r?.finished }
 }
 window.PTEProgress={refresh,mark,recordFor,markAttempted:recordAttempt,
  markScore:(score,meta)=>mark(true,score,meta),setContext,registerBank,currentItem,getStudents,getRecords,getCatalog:catalog,active};refresh();
+window.addEventListener('DOMContentLoaded',refresh);
 window.addEventListener('pte:cloud-updated',refresh);window.addEventListener('pte:student-changed',refresh);window.addEventListener('pte:progress-changed',()=>{if(page==='results.html'&&typeof draw==='function')draw()});
 
 // Teacher-only results are served from Apps Script (?teacher=1), not public GitHub Pages.
